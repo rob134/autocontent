@@ -1,0 +1,26 @@
+<div class="channel-list">
+  <h3>Active Channels</h3>
+  
+  <div *ngIf="channels.length === 0" class="empty-state">
+    <p>No channels connected. Create one using the form below.</p>
+  </div>
+
+  <div *ngIf="channels.length > 0" class="channels-grid">
+    <div *ngFor="let channel of channels" class="channel-card">
+      <div class="channel-header">
+        <h4>{{ channel.name }}</h4>
+        <span class="platform">{{ channel.platform }}</span>
+      </div>
+      <div class="channel-body">
+        <p><strong>Mode:</strong> {{ channel.mode }}</p>
+        <p><strong>Status:</strong> 
+          <span [class]="'status status-' + (channel.is_active ? 'active' : 'inactive')">
+            {{ channel.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <button class="refresh-button" (click)="onRefresh()">🔄 Refresh</button>
+</div>

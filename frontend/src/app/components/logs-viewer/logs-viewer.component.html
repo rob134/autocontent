@@ -1,0 +1,19 @@
+<div class="logs-viewer">
+  <h3>Execution Logs</h3>
+
+  <div *ngIf="logs.length === 0" class="empty-logs">
+    <p>No logs yet. Run a pipeline to see logs here.</p>
+  </div>
+
+  <div *ngIf="logs.length > 0" class="logs-container">
+    <div *ngFor="let log of logs" class="log-entry" [ngClass]="getLogClass(log.level)">
+      <div class="log-header">
+        <span class="log-icon">{{ getLogIcon(log.level) }}</span>
+        <span class="log-step">{{ log.step }}</span>
+        <span class="log-level">{{ log.level }}</span>
+        <span class="log-time">{{ log.created_at | date:'HH:mm:ss' }}</span>
+      </div>
+      <div class="log-message">{{ log.message }}</div>
+    </div>
+  </div>
+</div>
