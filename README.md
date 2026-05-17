@@ -144,6 +144,10 @@ GET    /api/v1/auth/youtube/callback      OAuth callback
 - OAuth foundation
 - Phase 1 endpoints implemented
 - Real-time log viewer
+ - Local developer environment bootstrap (scripts/bootstrap.sh)
+ - Backend virtualenv and Python dependencies installed (`backend/.venv`, `requirements.txt`)
+ - Frontend dependencies installed and lockfile committed (`frontend/package-lock.json`)
+ - FFmpeg installed and verified for media processing
 
 ### Phase 2 🔄
 - Scheduler for automated runs
@@ -331,4 +335,14 @@ For issues and questions, please open an GitHub issue or contact the development
 ---
 
 **Version**: 0.1.0 (Phase 1)  
-**Last Updated**: May 2024
+**Version**: 0.1.1 (Phase 1)
+**Last Updated**: May 17 2026
+
+## Recent Changes
+
+- Added `scripts/bootstrap.sh` to automate system/package setup, create backend virtualenv, install Python and Node dependencies, copy `.env` examples, and create `storage`/`temp` directories. (Committed)
+- Created placeholder `.env` files at project root and `backend/.env` from examples (kept uncommitted by design — `.env` is gitignored). (Generated)
+- Installed backend Python dependencies into `backend/.venv` and ran `npm install` in `frontend` (local dev setup completed). (Executed locally)
+- Committed `frontend/package-lock.json` to pin frontend dependency versions for reproducible installs. (Committed)
+
+These commits and local setup actions complete additional Phase 1 developer-experience tasks: environment bootstrap, dependency locking, and initial system dependency verification (FFmpeg).
