@@ -289,6 +289,34 @@ CREATE TABLE pipeline_logs (
 
 ## Testing
 
+## Credentials & Tokens
+
+This project integrates with several external services. Below are the credentials and tokens you will likely need and short instructions to obtain them.
+
+- **YouTube OAuth (Google Cloud Console)**: needed for publishing and channel access.
+  - Create a project at https://console.cloud.google.com/
+  - Enable the YouTube Data API v3
+  - Create OAuth 2.0 Client ID credentials (Application type: Web application)
+  - Add an authorized redirect URI: `http://localhost:8000/api/v1/auth/youtube/callback`
+  - Fill `YOUTUBE_CLIENT_ID` and `YOUTUBE_CLIENT_SECRET` in `backend/.env` or your `.env` file.
+
+- **OpenAI / Whisper API Key (optional)**: if using OpenAI hosted Whisper or other OpenAI services.
+  - Create an account at https://platform.openai.com/
+  - Generate an API key and set `OPENAI_API_KEY` (if the project is extended to use OpenAI APIs).
+
+- **Coqui TTS / Local models**: if using `TTS_ENGINE=coqui` you may either install the Coqui TTS Python package and models locally or use a hosted service.
+  - For local use: `pip install TTS` and follow Coqui docs to download models.
+  - For hosted services: set provider credentials per provider docs and update `backend/.env`.
+
+- **Storage (S3 / Spaces)**: for production storage, set `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` and `STORAGE_BUCKET` or update `STORAGE_PATH` for local disk use.
+  - For AWS: create an IAM user with S3 access and generate keys at https://console.aws.amazon.com/iam/
+
+- **SMTP (optional)**: to send emails (invite links, notifications), add `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` to your `.env`.
+
+- **Database**: by default the project uses SQLite (`DATABASE_URL=sqlite:///./autocontent.db`). For Postgres set `DATABASE_URL=postgresql://user:pass@host:5432/dbname`.
+
+Keep these secrets out of source control — the repository contains `.env.example` files and `.env` is ignored by default.
+
 ```bash
 # Backend tests (TODO)
 cd backend
