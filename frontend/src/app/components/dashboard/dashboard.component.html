@@ -1,32 +1,24 @@
-<div class="dashboard">
-  <div class="tabs">
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'channels'"
-      (click)="setActiveTab('channels')">
-      📺 Channels
-    </button>
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'pipeline'"
-      (click)="setActiveTab('pipeline')">
-      ⚙️ Run Pipeline
-    </button>
+<div class="chat-shell">
+  <div class="chat-header">
+    <h2>AutoContent Copilot</h2>
+    <p>UX conversacional para busca, edição generativa e publicação multi-plataforma.</p>
   </div>
 
-  <div class="tab-content">
-    <div *ngIf="activeTab === 'channels'" class="tab-pane">
-      <h2>Channel Management</h2>
-      <app-channel-list [channels]="channels" (refresh)="loadChannels()"></app-channel-list>
-      <app-channel-form (created)="loadChannels()"></app-channel-form>
-    </div>
-
-    <div *ngIf="activeTab === 'pipeline'" class="tab-pane">
-      <h2>Pipeline Execution</h2>
-      <app-pipeline-runner [channels]="channels"></app-pipeline-runner>
+  <div class="chat-thread">
+    <div class="msg" *ngFor="let msg of messages" [class.user]="msg.role === 'user'">
+      <div class="bubble">
+        <p>{{ msg.content }}</p>
+        <ul *ngIf="msg.meta?.length">
+          <li *ngFor="let step of msg.meta">{{ step }}</li>
+        </ul>
+      </div>
     </div>
   </div>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
-  <div *ngIf="loading" class="spinner">Loading...</div>
+  <div class="composer">
+    <textarea [(ngModel)]="prompt" rows="3" placeholder="Ex.: encontre podcasts de marketing e gere 10 cortes com maior retenção..."></textarea>
+    <button (click)="sendPrompt()" [disabled]="loading">{{ loading ? 'Processando...' : 'Enviar' }}</button>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
 </div>

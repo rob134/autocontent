@@ -11,6 +11,15 @@ class ContentModeEnum(str, Enum):
     CURATED = "curated"
     AVATAR = "avatar"
     ADS = "ads"
+    SEARCH_EDIT = "search_edit"
+    UPLOAD_ONLY = "upload_only"
+    GENERATIVE_CREATE = "generative_create"
+
+
+class OrchestrationModeEnum(str, Enum):
+    FASTAPI_SYNC = "fastapi_sync"
+    C_MESSAGE_BUS_READY = "c_message_bus_ready"
+    K8S_READY = "k8s_ready"
 
 
 # Channel Schemas
@@ -54,6 +63,36 @@ class PipelineBase(BaseModel):
 
 class PipelineRunRequest(PipelineBase):
     channel_id: int
+
+
+class AssistantMessageRequest(BaseModel):
+    message: str
+    channel_id: Optional[int] = None
+    source_url: Optional[HttpUrl] = None
+    orchestration_mode: OrchestrationModeEnum = OrchestrationModeEnum.C_MESSAGE_BUS_READY
+
+
+class AssistantMessageResponse(BaseModel):
+    intent: ContentModeEnum
+    reasoning: str
+    suggested_steps: List[str]
+    pipeline_request: PipelineRunRequest
+
+
+class SearchEditRunRequest(BaseModel):
+    prompt: str
+    niche: str = "general"
+
+
+class UploadOnlyRunRequest(BaseModel):
+    asset_path: str
+    platforms: List[str]
+
+
+class GenerativeRunRequest(BaseModel):
+    prompt: str
+    provider: str = "veo"
+    platforms: List[str] = ["youtube", "tiktok", "instagram"]
 
 
 class PipelineResponse(BaseModel):

@@ -14,6 +14,9 @@ class ContentModeEnum(str, enum.Enum):
     CURATED = "curated"
     AVATAR = "avatar"
     ADS = "ads"
+    SEARCH_EDIT = "search_edit"
+    UPLOAD_ONLY = "upload_only"
+    GENERATIVE_CREATE = "generative_create"
 
 
 class Channel(Base):

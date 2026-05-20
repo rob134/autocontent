@@ -29,4 +29,8 @@ export class PipelineService {
       `http://localhost:8000/api/v1/logs/${id}`
     );
   }
+
+  planWithAssistant(request: { message: string; channel_id?: number; source_url?: string; orchestration_mode?: string; }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/assistant`, request);
+  }
 }
