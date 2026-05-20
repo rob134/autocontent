@@ -1,57 +1,12 @@
-.dashboard {
-  padding: 20px;
-}
-
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #eee;
-}
-
-.tab-button {
-  padding: 10px 20px;
-  background: none;
-  border: none;
-  font-size: 1em;
-  cursor: pointer;
-  color: #666;
-  border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.tab-button:hover {
-  color: #667eea;
-}
-
-.tab-button.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-}
-
-.tab-content {
-  margin-top: 20px;
-}
-
-.tab-pane h2 {
-  color: #333;
-  margin-top: 0;
-}
-
-.alert {
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.alert-error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.spinner {
-  text-align: center;
-  padding: 40px;
-  color: #667eea;
-}
+.chat-shell { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.chat-header h2 { margin: 0; }
+.chat-header p { color: #666; margin-top: 4px; }
+.chat-thread { background: #f8f9fb; border: 1px solid #e8e8ee; border-radius: 12px; min-height: 420px; padding: 16px; }
+.msg { display: flex; margin-bottom: 12px; }
+.msg.user { justify-content: flex-end; }
+.bubble { background: white; border: 1px solid #e5e7ef; border-radius: 12px; padding: 12px; max-width: 80%; }
+.msg.user .bubble { background: #111827; color: #fff; border-color: #111827; }
+.composer { display: flex; gap: 12px; }
+textarea { flex: 1; border: 1px solid #dfe3ea; border-radius: 10px; padding: 10px; }
+button { border: none; border-radius: 10px; background: #2563eb; color: white; padding: 0 16px; }
+.error { color: #b91c1c; }

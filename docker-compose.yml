@@ -10,15 +10,24 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./autocontent.db
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID:-your_client_id}
-      - YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET:-your_client_secret}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - JAVA_ORCHESTRATOR_URL=http://orchestrator-java:8080/api/v1/orchestrator/enqueue
+      - YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID:-}
+      - YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET:-}
+      - TIKTOK_CLIENT_ID=${TIKTOK_CLIENT_ID:-}
+      - TIKTOK_CLIENT_SECRET=${TIKTOK_CLIENT_SECRET:-}
+      - INSTAGRAM_CLIENT_ID=${INSTAGRAM_CLIENT_ID:-}
+      - INSTAGRAM_CLIENT_SECRET=${INSTAGRAM_CLIENT_SECRET:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - LOG_LEVEL=INFO
     volumes:
       - ./backend:/app
       - ./storage:/app/storage
       - ./temp:/app/temp
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - orchestrator-java
     networks:
       - autocontent-network
 
@@ -33,6 +42,41 @@ services:
       - backend
     volumes:
       - ./frontend/src:/app/src
+    networks:
+      - autocontent-network
+
+  orchestrator-java:
+    image: maven:3.9-eclipse-temurin-21
+    container_name: autocontent-orchestrator
+    working_dir: /workspace
+    command: mvn spring-boot:run
+    volumes:
+      - ./orchestrator-java:/workspace
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    networks:
+      - autocontent-network
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: autocontent-kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
     networks:
       - autocontent-network
 

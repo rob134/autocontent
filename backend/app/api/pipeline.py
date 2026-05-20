@@ -2,17 +2,133 @@
 Pipeline execution API endpoints
 """
 import logging
+import os
+import json
+from urllib import request as urllib_request
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.services.pipeline import PipelineService
 from app.services.channel import ChannelService
-from app.schemas.base import PipelineRunRequest, PipelineResponse, PipelineDetailResponse
+from app.services.intent_pipeline import RankingEngine
+from app.services.platform_connectors import DiscoveryConnector, UploadConnector, GenerativeConnector
+from app.services.publish_scheduler import PublishScheduler
+from app.schemas.base import (
+    PipelineRunRequest,
+    PipelineResponse,
+    PipelineDetailResponse,
+    AssistantMessageRequest,
+    AssistantMessageResponse,
+    ContentModeEnum,
+    SearchEditRunRequest,
+    UploadOnlyRunRequest,
+    GenerativeRunRequest,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+ranking_engine = RankingEngine()
+discovery_connector = DiscoveryConnector()
+upload_connector = UploadConnector()
+generative_connector = GenerativeConnector()
+publish_scheduler = PublishScheduler()
+
+
+def _detect_intent(message: str) -> ContentModeEnum:
+    normalized = message.lower()
+    if any(k in normalized for k in ["upload", "subir", "postar", "já tenho o vídeo"]):
+        return ContentModeEnum.UPLOAD_ONLY
+    if any(k in normalized for k in ["gerar", "create", "criar", "api", "veo", "nano", "d-id", "avatar"]):
+        return ContentModeEnum.GENERATIVE_CREATE
+    return ContentModeEnum.SEARCH_EDIT
+
+
+@router.post("/assistant", response_model=AssistantMessageResponse)
+async def assistant_pipeline_plan(payload: AssistantMessageRequest):
+    """Chat-like assistant planner for a low-click content pipeline UX."""
+    intent = _detect_intent(payload.message)
+
+    reasoning = {
+        ContentModeEnum.SEARCH_EDIT: "Usuário descreveu busca semântica e cortes estratégicos em vídeos ranqueados.",
+        ContentModeEnum.UPLOAD_ONLY: "Usuário já possui mídia e quer publicar rápido com automações de título/descrição/postagem.",
+        ContentModeEnum.GENERATIVE_CREATE: "Usuário pediu criação de vídeo via APIs generativas e depois publicação multi-rede.",
+    }[intent]
+
+    suggested_steps = [
+        "Entender intenção e nicho por chat (UX estilo ChatGPT)",
+        "Orquestrar tarefas por mensageria (producer/worker) para discovery, edição e distribuição",
+        "Executar publicação sincronizada para YouTube, TikTok e Instagram",
+        "Retornar progresso em tempo real no chat com logs por etapa",
+    ]
+
+    pipeline_request = PipelineRunRequest(
+        channel_id=payload.channel_id or 1,
+        mode=intent,
+        content_keyword=payload.message,
+        source_url=str(payload.source_url) if payload.source_url else None,
+    )
+
+    orchestrator_url = os.getenv("JAVA_ORCHESTRATOR_URL", "http://localhost:8080/api/v1/orchestrator/enqueue")
+    try:
+        body = json.dumps({
+            "prompt": payload.message,
+            "mode": intent,
+            "channelId": payload.channel_id or 1,
+            "sourceUrl": str(payload.source_url) if payload.source_url else None,
+        }).encode("utf-8")
+        req = urllib_request.Request(orchestrator_url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+        urllib_request.urlopen(req, timeout=1)
+    except Exception:
+        logger.warning("Java orchestrator unavailable; continuing in local planning mode")
+
+    return AssistantMessageResponse(
+        intent=intent,
+        reasoning=reasoning,
+        suggested_steps=suggested_steps,
+        pipeline_request=pipeline_request,
+    )
+
+
+@router.post("/search-edit/run")
+async def run_search_edit(payload: SearchEditRunRequest):
+    candidates = discovery_connector.search_rank_candidates(payload.prompt, payload.niche)
+    ranking = ranking_engine.rank(candidates, payload.niche)
+    return {
+        "mode": "search_edit",
+        "prompt": payload.prompt,
+        "niche": payload.niche,
+        "top_videos": ranking,
+        "selected_clips_strategy": "Select top-ranked long-form sources, then generate short clips by transcript key moments.",
+    }
+
+
+@router.post("/upload-only/run")
+async def run_upload_only(payload: UploadOnlyRunRequest):
+    schedule = publish_scheduler.build_schedule(payload.platforms)
+    queued = [upload_connector.queue_upload(p, payload.asset_path, {"title": "AutoContent Upload"}) for p in payload.platforms]
+    return {
+        "mode": "upload_only",
+        "asset_path": payload.asset_path,
+        "publish_schedule": schedule,
+        "jobs": queued,
+    }
+
+
+@router.post("/generative/run")
+async def run_generative(payload: GenerativeRunRequest):
+    generation = generative_connector.generate_video(payload.provider, payload.prompt)
+    schedule = publish_scheduler.build_schedule(payload.platforms)
+    queued = [upload_connector.queue_upload(p, generation["asset_path"], {"title": "Generated by AutoContent"}) for p in payload.platforms]
+    return {
+        "mode": "generative_create",
+        "generation": generation,
+        "publish_schedule": schedule,
+        "jobs": queued,
+    }
+
 
 
 @router.post("/run", response_model=PipelineResponse)
